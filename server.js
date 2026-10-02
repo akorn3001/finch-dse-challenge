@@ -3,7 +3,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 
 const { page } = require('./render');
-const { createConnectSession } = require('./finch');
+const { createConnectSession, createAccessToken } = require('./finch');
 
 const app = express();
 app.use(cookieParser());
@@ -56,6 +56,13 @@ app.post('/connect', async (req, res) => {
     const providerId = req.body.provider_id;
     const session = await createConnectSession(providerId);
     res.redirect(session.connect_url);
+});
+
+app.get('/callback', async (req, res) => {
+    const code = req.query.code;
+    const tokenData = await createAccessToken(code);
+    console.log(tokenData);
+    res.send('Check your terminal');
 });
 
 const PORT = process.env.PORT || 3000;

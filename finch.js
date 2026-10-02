@@ -1,24 +1,34 @@
 const FINCH_API_BASE = 'https://api.tryfinch.com';
+const FINCH_API_VERSION = '2020-09-17';
 
+const crypto = require('crypto');
+
+// Base64 encodes client credentials
 function getBasicAuthHeader() {
     const credentials = `${process.env.FINCH_CLIENT_ID}:${process.env.FINCH_CLIENT_SECRET}`;
     return `Basic ${Buffer.from(credentials).toString('base64')}`;
 }
 
 async function createConnectSession(providerId) {
+    // Generate a random ID to use for customer ID instead of hardcoding
+    const customerId = crypto.randomUUID();
     const response = await fetch(`${FINCH_API_BASE}/connect/sessions`, {
         method: 'POST',
         headers: {
             'Authorization': getBasicAuthHeader(),
             'Content-Type': 'application/json',
+            'Finch-API-Version': FINCH_API_VERSION,
         },
         body: JSON.stringify({
-            customer_id: 'alex-demo-customer',
-            customer_name: 'Alex Demo Co',
+            customer_id: customerId,
+            customer_name: 'Demo Employer',
             //Only the four products needed. This scopes the token so it cannot call /payment or /pay-statement
             products: ['company', 'directory', 'individual', 'employment'],
             redirect_uri: process.env.REDIRECT_URI,
             sandbox: 'finch',
+            integration: {
+                provider: providerId,
+            },
         }),
     });
 
@@ -30,4 +40,27 @@ async function createConnectSession(providerId) {
     return response.json();
 }
 
-module.exports = { createConnectSession };
+async function createAccessToken(code) {
+    const response = await fetch(`${FINCH_API_BASE}/auth/token`, {
+        method: 'POST',
+        headers: {
+            'Finch-API-Version': FINCH_API_VERSION,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            client_id: process.env.FINCH_CLIENT_ID,
+            client_secret: process.env.FINCH_CLIENT_SECRET,
+            redirect_uri: process.env.REDIRECT_URI,
+            code,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Finch returned ${response.status}: ${errorBody}`);
+    }
+
+    return response.json();
+}
+
+module.exports = { createConnectSession, createAccessToken };
