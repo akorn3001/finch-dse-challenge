@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const { page } = require('./render')
+
+const { page } = require('./render');
+const { createConnectSession } = require('./finch');
 
 const app = express();
 app.use(cookieParser());
@@ -50,10 +52,10 @@ app.get('/', (req, res) => {
 });
 
 //Route which receives the selected provider
-app.post('/connect', (req, res) => {
+app.post('/connect', async (req, res) => {
     const providerId = req.body.provider_id;
-    console.log('User selected provider:', providerId);
-    res.send(page('Provider Selected', `<p>You selected: ${providerId}</p>`));
+    const session = await createConnectSession(providerId);
+    res.redirect(session.connect_url);
 });
 
 const PORT = process.env.PORT || 3000;
