@@ -4,10 +4,11 @@ const cookieParser = require('cookie-parser');
 
 const { page } = require('./render');
 const { createConnectSession, createAccessToken } = require('./finch');
+const { createSession, getSession } = require('./sessions');
 
 const app = express();
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 const PROVIDERS = [
@@ -35,16 +36,16 @@ app.get('/', (req, res) => {
         .map(p => `<option value="${p.id}">${p.display_name}</option>`)
         .join('');
 
-    const body =
-        `<h1>Connect to your provider</h1>
+    const body = `
+        <h1>Connect to your provider</h1>
         <form method="POST" action="/connect">
             <label for="provider">Select your provider</label>
             <select name="provider_id" id="provider">
                 ${options}
             </select>
             <button type="submit">Continue</button>
-        </form>`
-        ;
+        </form>
+        `;
 
     const html = page('Connect to your provider', body);
     res.send(html);
@@ -61,9 +62,36 @@ app.post('/connect', async (req, res) => {
 app.get('/callback', async (req, res) => {
     const code = req.query.code;
     const tokenData = await createAccessToken(code);
-    console.log(tokenData);
-    res.send('Check your terminal');
+
+    const sessionId = createSession({
+        accessToken: tokenData.access_token,
+        providerId: tokenData.provider_id,
+        products: tokenData.products,
+    });
+    // secure: true deliberately omitted as it would require HTTPS, which localhost doesn't use
+    // would use in production
+    res.cookie('sid', sessionId, { httpOnly: true, sameSite: 'lax' });
+    res.redirect('/dashboard');
 });
+
+
+app.get('/dashboard', (req, res) => {
+    const session = getSession(req.cookies.sid);
+
+    if (!session) {
+        return res.redirect('/');
+    }
+
+    const body = `
+        <h1>Connected</h1>
+        <p>Provider: ${session.providerId}</p>
+        <p>Products ${session.products.join(', ')}</p>
+        `;
+
+    const html = page('Dashboard', body);
+    res.send(html);
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
