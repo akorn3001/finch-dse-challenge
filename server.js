@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { page } = require('./render');
-const { createConnectSession, createAccessToken } = require('./finch');
+const { page, display, renderCompany } = require('./render');
+const { createConnectSession, createAccessToken, getCompany, getDirectory } = require('./finch');
 const { createSession, getSession } = require('./sessions');
 
 const app = express();
@@ -75,20 +75,22 @@ app.get('/callback', async (req, res) => {
 });
 
 
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', async (req, res) => {
     const session = getSession(req.cookies.sid);
 
     if (!session) {
         return res.redirect('/');
     }
+    console.log('SESSION: ', session);
+    const company = await getCompany(session.accessToken);
+    const directory = await getDirectory(session.accessToken)
 
-    const body = `
-        <h1>Connected</h1>
-        <p>Provider: ${session.providerId}</p>
-        <p>Products ${session.products.join(', ')}</p>
-        `;
+    console.log('COMPANY: ', company);
+    console.log('DIRECTORY: ', directory);
 
-    const html = page('Dashboard', body);
+    const companyBody = renderCompany(company)
+
+    const html = page('Dashboard', companyBody);
     res.send(html);
 });
 

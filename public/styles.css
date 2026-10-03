@@ -1,0 +1,17 @@
+.missing {
+    color: gray;
+    font-style: italic;
+}
+
+.bold-label {
+    font-weight: bold;
+}
+
+table, th, td {
+    border: 1px solid black;
+}
+
+table {
+    width: 40%;
+}
+
