@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { page, display, renderCompany } = require('./render');
-const { createConnectSession, createAccessToken, getCompany, getDirectory } = require('./finch');
+const { page, renderCompany, renderDirectory, renderIndividual } = require('./render');
+const { createConnectSession, createAccessToken, getCompany, getDirectory, getIndividual, getEmployment } = require('./finch');
 const { createSession, getSession } = require('./sessions');
 
 const app = express();
@@ -81,16 +81,39 @@ app.get('/dashboard', async (req, res) => {
     if (!session) {
         return res.redirect('/');
     }
-    console.log('SESSION: ', session);
-    const company = await getCompany(session.accessToken);
-    const directory = await getDirectory(session.accessToken)
 
-    console.log('COMPANY: ', company);
-    console.log('DIRECTORY: ', directory);
+    const [company, directory] = await Promise.all([
+        getCompany(session.accessToken),
+        getDirectory(session.accessToken),
+    ]);
 
-    const companyBody = renderCompany(company)
+    const companyBody = renderCompany(company);
+    const directoryBody = renderDirectory(directory);
 
-    const html = page('Dashboard', companyBody);
+    const body = `
+    ${companyBody}
+    <hr>
+    ${directoryBody}
+    `;
+
+    const html = page('Dashboard', body);
+    res.send(html);
+});
+
+app.get('/employee/:id', async(req,res) => {
+    const session = getSession(req.cookies.sid);
+
+    if (!session) {
+        return res.redirect('/');
+    }
+
+    const individualId = req.params.id;
+    const individual = await getIndividual(session.accessToken, individualId);
+
+    const body = renderIndividual(individual.responses[0].body);
+
+    const html = page('Individual', body);
+
     res.send(html);
 });
 

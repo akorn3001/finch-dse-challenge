@@ -78,16 +78,36 @@ async function finchRequest(path, accessToken, options = {}) {
 }
 
 async function getCompany(accessToken) {
-    return finchRequest('/employer/company', accessToken)
+    return finchRequest('/employer/company', accessToken);
 }
 
 async function getDirectory(accessToken) {
-    return finchRequest('/employer/directory?limit=100', accessToken)
+    return finchRequest('/employer/directory?limit=100', accessToken);
+}
+
+async function getIndividual(accessToken, individualId) {
+    return finchRequest('/employer/individual', accessToken, {
+        method: 'POST',
+        body: {
+            requests: [{ individual_id: individualId }]
+        }
+    });
+}
+
+async function getEmployment(accessToken, individualId) {
+    return finchRequest('/employer/employment', accessToken, {
+        method: 'POST',
+        body: {
+            requests: [{ individual_id: individualId }]
+        }
+    });
 }
 
 module.exports = { 
     createConnectSession, 
     createAccessToken,
     getCompany,
-    getDirectory 
+    getDirectory,
+    getIndividual,
+    getEmployment,
 };

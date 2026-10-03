@@ -7,11 +7,34 @@
     font-weight: bold;
 }
 
+.is-active-parent {
+    text-align: center;
+}
+
+.is-active, .not-active {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.not-active {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 3px 16px;
+    background-color: #F9CB9C;
+}
+
 table, th, td {
     border: 1px solid black;
 }
 
 table {
-    width: 40%;
+    width: 50%;
 }
 
+tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #ffffff;
+}
