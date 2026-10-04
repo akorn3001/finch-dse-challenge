@@ -24,6 +24,15 @@ function yesNo(value) {
     return value ? 'Yes' : 'No';
 }
 
+function formatIncome(income) {
+    if (!income || income.amount === null || income.amount === undefined) return null;
+    const amount = (income.amount / 100).toLocaleString('en-US', {
+        style: 'currency',
+        currency: (income.currency || 'usd').toUpperCase(),
+    });
+    return `${amount}`;
+}
+
 // Function to mask potentially sensitive values, like routing number and account number
 function maskSensitive(value) {
     if (!value) return null;
@@ -171,4 +180,65 @@ function renderIndividual(individual) {
     `;
 }
 
-module.exports = { page, display, renderCompany, renderDirectory, renderIndividual };
+function renderEmployment(employment) {
+    const incomeHistoryRows = (employment.income_history || []).map(h => `
+        <tr>
+            <td>${display(h.unit)}</td>
+            <td>${display(formatIncome(h))}</td>
+            <td>${display(h.currency)}</td>
+            <td>${display(h.effective_date)}</td>
+        </tr>
+        `);
+    
+    const customFieldRows = (employment.custom_fields || []).map(c => `
+            <tr>
+                <td>${display(c.name)}</td>
+                <td>${display(c.value)}</td>
+            </tr>
+        `);
+
+    return `
+        <h2>Employment</h2>
+        <p><span class="bold-label">Title: </span>${display(employment.title)}</p>
+        <p><span class="bold-label">Manager: </span>${display(employment.manager?.id)}</p>
+        <p><span class="bold-label">Department: </span>${display(employment.department?.name)}</p>
+        <p><span class="bold-label">Employment Type: </span>${display(employment.employment?.type)}</p>
+        <p><span class="bold-label">Employment Subtype: </span>${display(employment.employment?.subtype)}</p>
+        <p><span class="bold-label">Start Date: </span>${display(employment.start_date)}</p>
+        <p><span class="bold-label">End Date: </span>${display(employment.end_date)}</p>
+        <p><span class="bold-label">Latest Rehire Date: </span>${display(employment.latest_rehire_date)}</p>
+        <p><span class="bold-label">Employment Status: </span>${display(employment.employment_status)}</p>
+        <p><span class="bold-label">FLSA Status: </span>${display(employment.flsa_status)}</p>
+        <p><span class="bold-label">Union Code: </span>${display(employment.union_code)}</p>
+        <p><span class="bold-label">Union Local: </span>${display(employment.union_local)}</p>
+        <p><span class="bold-label">Highly Compensated Employee: </span>${display(yesNo(employment.highly_compensated_employee))}</p>
+        <p><span class="bold-label">Key Employee: </span>${display(yesNo(employment.key_employee))}</p>
+        <p><span class="bold-label">Class Code: </span>${display(employment.class_code)}</p>
+        <br>
+        <h3>Location</h3>
+        <p><span class="bold-label">Line 1: </span>${display(employment.location?.line1)}</p>
+        <p><span class="bold-label">Line 2: </span>${display(employment.location?.line2)}</p>
+        <p><span class="bold-label">City: </span>${display(employment.location?.city)}</p>
+        <p><span class="bold-label">State: </span>${display(employment.location?.state)}</p>
+        <p><span class="bold-label">Postal Code: </span>${display(employment.location?.postal_code)}</p>
+        <p><span class="bold-label">Country: </span>${display(employment.location?.country)}</p>
+        <br>
+        <h3>Income</h3>
+        <p><span class="bold-label">Unit: </span>${display(employment.income?.unit)}</p>
+        <p><span class="bold-label">Amount: </span>${display(formatIncome(employment.income))}</p>
+        <p><span class="bold-label">Currency: </span>${display(employment.income?.currency)}</p>
+        <p><span class="bold-label">Effective Date: </span>${display(employment.income?.effective_date)}</p>
+        <br>
+        <h3>Income History</h3>
+        ${renderTable(['Unit', 'Amount', 'Currency', 'Effective Date'], incomeHistoryRows)}
+        <br>
+        <h3>Custom Fields</h3>
+        ${renderTable(['Name', 'Value'], customFieldRows)}
+        <br>
+        <p><span class="bold-label">Source ID: </span>${display(employment.source_id)}</p>
+        <p><span class="bold-label">Is Active? </span>${display(yesNo(employment.is_active))}</p>
+        
+    `;
+}
+
+module.exports = { page, display, renderCompany, renderDirectory, renderIndividual, renderEmployment };

@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { page, renderCompany, renderDirectory, renderIndividual } = require('./render');
+const { page, renderCompany, renderDirectory, renderIndividual, renderEmployment } = require('./render');
 const { createConnectSession, createAccessToken, getCompany, getDirectory, getIndividual, getEmployment } = require('./finch');
 const { createSession, getSession } = require('./sessions');
 
@@ -106,11 +106,21 @@ app.get('/employee/:id', async(req,res) => {
     if (!session) {
         return res.redirect('/');
     }
-
     const individualId = req.params.id;
-    const individual = await getIndividual(session.accessToken, individualId);
 
-    const body = renderIndividual(individual.responses[0].body);
+    const [individual, employment] = await Promise.all([
+        getIndividual(session.accessToken, individualId),
+        getEmployment(session.accessToken, individualId),
+    ]);
+
+    const individualBody = renderIndividual(individual.responses[0].body);
+    const employmentBody = renderEmployment(employment.responses[0].body);
+
+    const body = `
+    ${individualBody}
+    <hr>
+    ${employmentBody}
+    `;
 
     const html = page('Individual', body);
 
