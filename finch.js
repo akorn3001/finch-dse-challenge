@@ -109,7 +109,7 @@ async function getCompany(accessToken) {
 }
 
 async function getDirectory(accessToken) {
-    return finchRequest('/employer/directory?limit=100', accessToken);
+    return finchRequest('/employer/directory?limit=10000', accessToken);
 }
 
 async function getIndividual(accessToken, individualId) {

@@ -73,12 +73,10 @@ app.get('/dashboard', async (req, res) => {
     const directoryBody = directoryResult.status === 'fulfilled' ? renderDirectory(directoryResult.value) : renderError('Directory', directoryResult.reason, providerDisplayName(session.providerId));
 
     const body = `
-    <h2>Scope Tests</h2>
-    <p><a href="/test/payment">Test /payment</a></p>
-    <p><a href="/test/benefits">Test /benefits</a></p>
-    <hr>
+    <h2>Error-handling Demos</h2>
+    <p><a href="/test/payment">Test 403 errors for /payment calls</a></p>
+    <p><a href="/test/benefits">Test 501 errors for /benefits calls (provider-dependent)</a></p>
     ${companyBody}
-    <hr>
     ${directoryBody}
     `;
 

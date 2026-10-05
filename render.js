@@ -181,18 +181,14 @@ function renderIndividual(individual) {
         <p><span class="bold-label">Middle Name: </span>${display(individual.middle_name)}</p>
         <p><span class="bold-label">Last Name: </span>${display(individual.last_name)}</p>
         <p><span class="bold-label">Preferred Name: </span>${display(individual.preferred_name)}</p>
-        <br>
         <h3>Emails</h3>
         ${renderTable(['Type', 'Email Address'], emailRows)}
-        <br>
         <h3>Phone Numbers</h3>
         ${renderTable(['Type', 'Phone Number'], phoneNumberRows)}
-        <br>
         <p><span class="bold-label">Gender: </span>${display(individual.gender)}</p>
         <p><span class="bold-label">Ethnicity: </span>${display(individual.ethnicity)}</p>
         <p><span class="bold-label">Marital Status: </span>${display(individual.marital_status)}</p>
         <p><span class="bold-label">Date of Birth: </span>${display(individual.dob)}</p>
-        <br>
         <h3>Residence</h3>
         <p><span class="bold-label">Line 1: </span>${display(individual.residence?.line1)}</p>
         <p><span class="bold-label">Line 2: </span>${display(individual.residence?.line2)}</p>
@@ -237,7 +233,6 @@ function renderEmployment(employment) {
         <p><span class="bold-label">Highly Compensated Employee: </span>${display(yesNo(employment.highly_compensated_employee))}</p>
         <p><span class="bold-label">Key Employee: </span>${display(yesNo(employment.key_employee))}</p>
         <p><span class="bold-label">Class Code: </span>${display(employment.class_code)}</p>
-        <br>
         <h3>Location</h3>
         <p><span class="bold-label">Line 1: </span>${display(employment.location?.line1)}</p>
         <p><span class="bold-label">Line 2: </span>${display(employment.location?.line2)}</p>
@@ -245,19 +240,15 @@ function renderEmployment(employment) {
         <p><span class="bold-label">State: </span>${display(employment.location?.state)}</p>
         <p><span class="bold-label">Postal Code: </span>${display(employment.location?.postal_code)}</p>
         <p><span class="bold-label">Country: </span>${display(employment.location?.country)}</p>
-        <br>
         <h3>Income</h3>
         <p><span class="bold-label">Unit: </span>${display(employment.income?.unit)}</p>
         <p><span class="bold-label">Amount: </span>${display(formatIncome(employment.income))}</p>
         <p><span class="bold-label">Currency: </span>${display(employment.income?.currency)}</p>
         <p><span class="bold-label">Effective Date: </span>${display(employment.income?.effective_date)}</p>
-        <br>
         <h3>Income History</h3>
         ${renderTable(['Unit', 'Amount', 'Currency', 'Effective Date'], incomeHistoryRows)}
-        <br>
         <h3>Custom Fields</h3>
         ${renderTable(['Name', 'Value'], customFieldRows)}
-        <br>
         <p><span class="bold-label">Source ID: </span>${display(employment.source_id)}</p>
         <p><span class="bold-label">Is Active? </span>${display(yesNo(employment.is_active))}</p>
         
