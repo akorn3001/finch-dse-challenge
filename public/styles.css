@@ -17,19 +17,40 @@ main {
 }
 
 /* ---------- headings ---------- */
-h1 { font-size: 1.6rem; margin: 0 0 20px; }
+h1 {
+    font-size: 1.6rem;
+    margin: 0 0 20px;
+}
+
 h2 {
     font-size: 1.25rem;
     margin: 32px 0 12px;
     padding-bottom: 6px;
     border-bottom: 2px solid #e4e7eb;
 }
-h3 { font-size: 1rem; margin: 24px 0 8px; color: #52606d; }
+
+h3 {
+    font-size: 1rem;
+    margin: 24px 0 8px;
+    color: #52606d;
+}
 
 /* ---------- field rows ---------- */
-main p { margin: 4px 0; }
-.bold-label { font-weight: 600; color: #3e4c59; display: inline-block; min-width: 190px; }
-.missing { color: #9aa5b1; font-style: italic; }
+main p {
+    margin: 4px 0;
+}
+
+.bold-label {
+    font-weight: 600;
+    color: #3e4c59;
+    display: inline-block;
+    min-width: 190px;
+}
+
+.missing {
+    color: #9aa5b1;
+    font-style: italic;
+}
 
 /* ---------- tables ---------- */
 table {
@@ -38,6 +59,7 @@ table {
     margin: 8px 0 4px;
     font-size: 14px;
 }
+
 th {
     background: #f0f4f8;
     text-align: left;
@@ -46,32 +68,59 @@ th {
     font-weight: 600;
     color: #3e4c59;
 }
-td { padding: 7px 10px; border-bottom: 1px solid #e4e7eb; }
-tbody tr:hover { background: #f8fafc; }
+
+td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e4e7eb;
+}
+
+tbody tr:hover {
+    background: #f8fafc;
+}
 
 /* ---------- active badge ---------- */
-.is-active-parent { text-align: center; }
-.is-active, .not-active {
+.is-active-parent {
+    text-align: center;
+}
+
+.is-active,
+.not-active {
     display: inline-block;
     border-radius: 999px;
     padding: 2px 12px;
     font-size: 13px;
     font-weight: 500;
 }
-.is-active { background: #e3f9e5; color: #207227; }
-.not-active { background: #ffeeee; color: #a61b1b; }
+
+.is-active {
+    background: #e3f9e5;
+    color: #207227;
+}
+
+.not-active {
+    background: #ffeeee;
+    color: #a61b1b;
+}
 
 /* ---------- links & form ---------- */
-a { color: #2563eb; text-decoration: none; }
-a:hover { text-decoration: underline; }
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
 
-select, button {
+a:hover {
+    text-decoration: underline;
+}
+
+select,
+button {
     font: inherit;
     padding: 7px 12px;
     border: 1px solid #cbd2d9;
     border-radius: 5px;
     background: #fff;
 }
+
 button {
     background: #2563eb;
     color: #fff;
@@ -79,10 +128,21 @@ button {
     cursor: pointer;
     margin-left: 8px;
 }
-button:hover { background: #1d4ed8; }
-label { margin-right: 8px; font-weight: 500; }
 
-hr { border: none; border-top: 1px solid #e4e7eb; margin: 32px 0; }
+button:hover {
+    background: #1d4ed8;
+}
+
+label {
+    margin-right: 8px;
+    font-weight: 500;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e4e7eb;
+    margin: 32px 0;
+}
 
 /* ---------- errors ---------- */
 .error-box {
@@ -93,69 +153,6 @@ hr { border: none; border-top: 1px solid #e4e7eb; margin: 32px 0; }
     padding: 12px 16px;
     margin: 16px 0;
     max-width: 640px;
-}
-.error-box p { margin: 0; }
-.error-box p:first-child { font-weight: 600; color: #5c4a28; }
-.error-detail { margin-top: 6px !important; font-size: 0.9em; color: #7a6a52; }
-
-pre {
-    background: #f5f7fa;
-    border: 1px solid #e4e7eb;
-    border-radius: 4px;
-    padding: 12px;
-    overflow-x: auto;
-    font-size: 13px;
-}
-
-.missing {
-    color: gray;
-    font-style: italic;
-}
-
-.bold-label {
-    font-weight: bold;
-}
-
-.is-active-parent {
-    text-align: center;
-}
-
-.is-active, .not-active {
-    text-align: center;
-    vertical-align: middle;
-}
-
-.not-active {
-    display: inline-block;
-    border-radius: 999px;
-    padding: 3px 16px;
-    background-color: #F9CB9C;
-}
-
-table, th, td {
-    border: 1px solid black;
-}
-
-table {
-    width: 50%;
-}
-
-tbody tr:nth-child(odd) {
-  background-color: #f2f2f2;
-}
-
-tbody tr:nth-child(even) {
-  background-color: #ffffff;
-}
-
-.error-box {
-    border: 1px solid #e0d0b0;
-    border-left: 4px solid #d99e3f;
-    background-color: #fdf8ef;
-    border-radius: 4px;
-    padding: 12px 16px;
-    margin: 16px 0;
-    max-width: 50%;
 }
 
 .error-box p {
@@ -171,4 +168,13 @@ tbody tr:nth-child(even) {
     margin-top: 6px !important;
     font-size: 0.9em;
     color: #7a6a52;
+}
+
+pre {
+    background: #f5f7fa;
+    border: 1px solid #e4e7eb;
+    border-radius: 4px;
+    padding: 12px;
+    overflow-x: auto;
+    font-size: 13px;
 }
