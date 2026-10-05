@@ -42,8 +42,8 @@ async function createConnectSession(providerId) {
     });
 
     if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Finch returned ${response.status}: ${errorBody}`);
+        const errorBody = await response.json().catch(() => ({}));
+        throw new FinchError(response.status, errorBody);
     }
 
     return response.json();
@@ -65,8 +65,8 @@ async function createAccessToken(code) {
     });
 
     if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Finch returned ${response.status}: ${errorBody}`);
+        const errorBody = await response.json().catch(() => ({}));
+        throw new FinchError(response.status, errorBody);
     }
 
     return response.json();

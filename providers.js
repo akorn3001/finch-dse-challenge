@@ -12,20 +12,8 @@ const PROVIDERS = [
         "display_name": "BambooHR"
     },
     {
-        "id": "personio",
-        "display_name": "Personio"
-    },
-    {
         "id": "sapling",
         "display_name": "Sapling"
-    },
-    {
-        "id": "sequoia_one",
-        "display_name": "Sequoia One"
-    },
-    {
-        "id": "trinet",
-        "display_name": "Trinet PEO"
     },
     {
         "id": "trustpoint",

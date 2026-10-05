@@ -5,14 +5,14 @@ const cookieParser = require('cookie-parser');
 const { PROVIDERS, providerDisplayName } = require('./providers');
 const { createSession, getSession } = require('./sessions');
 const { createConnectSession, createAccessToken, getCompany, getDirectory, getIndividual, getEmployment, getPayment, listBenefits } = require('./finch');
-const { page, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits } = require('./render');
+const { page, escapeHtml, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits } = require('./render');
 
 const app = express();
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Route for home page. Loads hardcoded list of providers
+// Home page - loads hardcoded list of providers
 app.get('/', (req, res) => {
     const options = PROVIDERS
         .map(p => `<option value="${p.id}">${p.display_name}</option>`)
@@ -34,29 +34,70 @@ app.get('/', (req, res) => {
 
 });
 
-//Route which receives the selected provider
+// Receives the selected provider and gets connect_url for redirection
 app.post('/connect', async (req, res) => {
     const providerId = req.body.provider_id;
-    const session = await createConnectSession(providerId);
-    res.redirect(session.connect_url);
+
+    try {
+        const session = await createConnectSession(providerId);
+        res.redirect(session.connect_url);
+    } catch (error) {
+        const detail = error.finchCode === 'unsupported_scopes_for_provider' ? `${providerDisplayName(providerId)} doesn't support all the data types this app requests.` : `Couldn't start a connection with ${providerDisplayName(providerId)}.`;
+
+        res.status(502).send(page('Connection error', `
+                <div class="error-box">
+                    <p>${escapeHtml(detail)}</p>
+                    <p class="error-detail">Try a different provider.</p>
+                </div>
+                <p><a href="/">Back to providers</a></p>
+            `));
+    }
+
+
 });
 
+// Swaps code for access token to create session
 app.get('/callback', async (req, res) => {
     const code = req.query.code;
-    const tokenData = await createAccessToken(code);
 
-    const sessionId = createSession({
-        accessToken: tokenData.access_token,
-        providerId: tokenData.provider_id,
-        products: tokenData.products,
-    });
-    // { secure: true } deliberately omitted as it would require HTTPS, which localhost doesn't use
-    // would use in production
-    res.cookie('sid', sessionId, { httpOnly: true, sameSite: 'lax' });
-    res.redirect('/dashboard');
+    // No code means the user cancelled, the provider rejected the login,
+    // or someone hit /callback directly. Nothing to exchange.
+    if (!code) {
+        return res.status(400).send(page('Connection not completed', `
+                <div class="error-box">
+                    <p>The connection wasn't completed.</p>
+                    <p class="error-detail">No authorization code was returned. This usually means the login was cancelled.</p>
+                </div>
+                <p><a href="/">Back to providers</a></p>
+            `));
+    }
+
+    try {
+        const tokenData = await createAccessToken(code);
+        const sessionId = createSession({
+            accessToken: tokenData.access_token,
+            providerId: tokenData.provider_id,
+            products: tokenData.products,
+        });
+        // { secure: true } deliberately omitted as it would require HTTPS, which localhost doesn't use
+        // would use in production
+        res.cookie('sid', sessionId, { httpOnly: true, sameSite: 'lax' });
+        res.redirect('/dashboard');
+    } catch (error) {
+        const detail = error.status === 400 ? 'The authorization code was invalid or has already been used. Each code can only be exchanged once.' : error.status === 401 ? 'The client credentials in your .env file were rejected.' : 'Finch could not be reached to complete the connection.';
+
+        res.status(502).send(page('Connection error', `
+            <div class="error-box">
+                <p>Couldn't finish connecting to your provider.</p>
+                <p class="error-detail">${escapeHtml(detail)}</p>
+            </div>
+            <p><a href="/">Back to providers</a></p>
+            `));
+    }
+
 });
 
-
+// Main page which shows company and directory data
 app.get('/dashboard', async (req, res) => {
     const session = getSession(req.cookies.sid);
 
@@ -84,7 +125,8 @@ app.get('/dashboard', async (req, res) => {
     res.send(html);
 });
 
-app.get('/individual/:id', async(req,res) => {
+// Page that shows individual and employment data for single individual
+app.get('/individual/:id', async (req, res) => {
     const session = getSession(req.cookies.sid);
 
     if (!session) {
@@ -111,6 +153,7 @@ app.get('/individual/:id', async(req,res) => {
     res.send(html);
 });
 
+// Route for testing /payment call
 app.get('/test/payment', async (req, res) => {
     const session = getSession(req.cookies.sid);
 
@@ -128,8 +171,9 @@ app.get('/test/payment', async (req, res) => {
     }
 
     res.send(page('Payment', body));
-}); 
+});
 
+// Route for testing /benefits call
 app.get('/test/benefits', async (req, res) => {
     const session = getSession(req.cookies.sid);
 

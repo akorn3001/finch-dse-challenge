@@ -126,6 +126,7 @@ function renderCompany(company) {
         <p><span class="bold-label">EIN: </span>${display(company.ein)}</p>
         <p><span class="bold-label">Primary Email: </span>${display(company.primary_email)}</p>
         <p><span class="bold-label">Primary Phone Number: </span>${display(company.primary_phone_number)}</p>
+        <br>
         <h3>Departments</h3>
         ${renderTable(['Name', 'Parent'], departmentRows)}
         <h3>Locations</h3>
@@ -185,6 +186,7 @@ function renderIndividual(individual) {
         ${renderTable(['Type', 'Email Address'], emailRows)}
         <h3>Phone Numbers</h3>
         ${renderTable(['Type', 'Phone Number'], phoneNumberRows)}
+        <br>
         <p><span class="bold-label">Gender: </span>${display(individual.gender)}</p>
         <p><span class="bold-label">Ethnicity: </span>${display(individual.ethnicity)}</p>
         <p><span class="bold-label">Marital Status: </span>${display(individual.marital_status)}</p>
@@ -249,6 +251,7 @@ function renderEmployment(employment) {
         ${renderTable(['Unit', 'Amount', 'Currency', 'Effective Date'], incomeHistoryRows)}
         <h3>Custom Fields</h3>
         ${renderTable(['Name', 'Value'], customFieldRows)}
+        <br>
         <p><span class="bold-label">Source ID: </span>${display(employment.source_id)}</p>
         <p><span class="bold-label">Is Active? </span>${display(yesNo(employment.is_active))}</p>
         
@@ -256,11 +259,11 @@ function renderEmployment(employment) {
 }
 
 function renderPayment(payment) {
-    return `<h2>Payment</h2><br><pre>${JSON.stringify(payment, null, 2)}</pre>`;
+    return `<h2>Payment</h2><br><h3>Payment data would go here</h3>`;
 }
 
 function renderBenefits(benefits) {
-    return `<h2>Benefits</h2><br><pre>${JSON.stringify(benefits, null, 2)}</pre>`;
+    return `<h2>Benefits</h2><h3>Benefits data would go here</h3>`;
 }
 
-module.exports = { page, display, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits };
+module.exports = { page, display, escapeHtml, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits };
