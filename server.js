@@ -2,35 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 
-const { page, renderCompany, renderDirectory, renderIndividual, renderEmployment } = require('./render');
-const { createConnectSession, createAccessToken, getCompany, getDirectory, getIndividual, getEmployment } = require('./finch');
+const { PROVIDERS, providerDisplayName } = require('./providers');
 const { createSession, getSession } = require('./sessions');
+const { createConnectSession, createAccessToken, getCompany, getDirectory, getIndividual, getEmployment, getPayment, listBenefits } = require('./finch');
+const { page, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits } = require('./render');
 
 const app = express();
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-const PROVIDERS = [
-    {
-        "id": "adp_workforce_now",
-        "display_name": "ADP Workforce Now"
-    },
-    {
-        "id": "bamboo_hr",
-        "display_name": "BambooHR"
-    },
-    {
-        "id": "sequoia_one",
-        "display_name": "Sequoia One"
-    },
-    {
-        "id": "trinet",
-        "display_name": "Trinet PEO"
-    }
-];
-
-// Route for home page. Loads hardcoded list of providers above, may call /providers later if time permits
+// Route for home page. Loads hardcoded list of providers
 app.get('/', (req, res) => {
     const options = PROVIDERS
         .map(p => `<option value="${p.id}">${p.display_name}</option>`)
@@ -68,7 +50,7 @@ app.get('/callback', async (req, res) => {
         providerId: tokenData.provider_id,
         products: tokenData.products,
     });
-    // secure: true deliberately omitted as it would require HTTPS, which localhost doesn't use
+    // { secure: true } deliberately omitted as it would require HTTPS, which localhost doesn't use
     // would use in production
     res.cookie('sid', sessionId, { httpOnly: true, sameSite: 'lax' });
     res.redirect('/dashboard');
@@ -82,15 +64,19 @@ app.get('/dashboard', async (req, res) => {
         return res.redirect('/');
     }
 
-    const [company, directory] = await Promise.all([
+    const [companyResult, directoryResult] = await Promise.allSettled([
         getCompany(session.accessToken),
         getDirectory(session.accessToken),
     ]);
 
-    const companyBody = renderCompany(company);
-    const directoryBody = renderDirectory(directory);
+    const companyBody = companyResult.status === 'fulfilled' ? renderCompany(companyResult.value) : renderError('Company', companyResult.reason, providerDisplayName(session.providerId));
+    const directoryBody = directoryResult.status === 'fulfilled' ? renderDirectory(directoryResult.value) : renderError('Directory', directoryResult.reason, providerDisplayName(session.providerId));
 
     const body = `
+    <h2>Scope Tests</h2>
+    <p><a href="/test/payment">Test /payment</a></p>
+    <p><a href="/test/benefits">Test /benefits</a></p>
+    <hr>
     ${companyBody}
     <hr>
     ${directoryBody}
@@ -100,7 +86,7 @@ app.get('/dashboard', async (req, res) => {
     res.send(html);
 });
 
-app.get('/employee/:id', async(req,res) => {
+app.get('/individual/:id', async(req,res) => {
     const session = getSession(req.cookies.sid);
 
     if (!session) {
@@ -108,13 +94,13 @@ app.get('/employee/:id', async(req,res) => {
     }
     const individualId = req.params.id;
 
-    const [individual, employment] = await Promise.all([
+    const [individualResult, employmentResult] = await Promise.allSettled([
         getIndividual(session.accessToken, individualId),
         getEmployment(session.accessToken, individualId),
     ]);
 
-    const individualBody = renderIndividual(individual.responses[0].body);
-    const employmentBody = renderEmployment(employment.responses[0].body);
+    const individualBody = individualResult.status === 'fulfilled' ? renderIndividual(individualResult.value.responses[0].body) : renderError('Individual', individualResult.reason, providerDisplayName(session.providerId));
+    const employmentBody = employmentResult.status === 'fulfilled' ? renderEmployment(employmentResult.value.responses[0].body) : renderError('Employment', employmentResult.reason, providerDisplayName(session.providerId));
 
     const body = `
     ${individualBody}
@@ -125,6 +111,45 @@ app.get('/employee/:id', async(req,res) => {
     const html = page('Individual', body);
 
     res.send(html);
+});
+
+app.get('/test/payment', async (req, res) => {
+    const session = getSession(req.cookies.sid);
+
+    if (!session) {
+        return res.redirect('/');
+    }
+
+    let body;
+
+    try {
+        const paymentResult = await getPayment(session.accessToken);
+        body = renderPayment(paymentResult);
+    } catch (error) {
+        body = renderError('Payment', error, providerDisplayName(session.providerId));
+    }
+
+    res.send(page('Payment', body));
+}); 
+
+app.get('/test/benefits', async (req, res) => {
+    const session = getSession(req.cookies.sid);
+
+    if (!session) {
+        return res.redirect('/');
+    }
+
+    let body;
+
+    try {
+        const benefitsResult = await listBenefits(session.accessToken);
+        body = renderBenefits(benefitsResult);
+    } catch (error) {
+        body = renderError('Benefits', error, providerDisplayName(session.providerId));
+    }
+
+    res.send(page('Benefits', body));
+
 });
 
 

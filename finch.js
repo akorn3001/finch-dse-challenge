@@ -3,11 +3,21 @@ const FINCH_API_VERSION = '2020-09-17';
 
 const crypto = require('crypto');
 
+class FinchError extends Error {
+    constructor(status, body) {
+        super(body?.message || `Finch API error ${status}`);
+        this.status = status;
+        this.finchCode = body?.finch_code;
+        this.finchName = body?.name;
+    }
+} 
+
 // Base64 encodes client credentials
 function getBasicAuthHeader() {
     const credentials = `${process.env.FINCH_CLIENT_ID}:${process.env.FINCH_CLIENT_SECRET}`;
     return `Basic ${Buffer.from(credentials).toString('base64')}`;
 }
+
 async function createConnectSession(providerId) {
     // Generate a random ID to use for customer ID instead of hardcoding
     const customerId = crypto.randomUUID();
@@ -21,8 +31,8 @@ async function createConnectSession(providerId) {
         body: JSON.stringify({
             customer_id: customerId,
             customer_name: 'Demo Employer',
-            //Only the four products needed. This scopes the token so it cannot call /payment or /pay-statement
-            products: ['company', 'directory', 'individual', 'employment'],
+            // The four main products excluding payment endpoints, but including benefits to show 501 errors
+            products: ['company', 'directory', 'individual', 'employment', 'benefits'],
             redirect_uri: process.env.REDIRECT_URI,
             sandbox: 'finch',
             integration: {
@@ -74,7 +84,24 @@ async function finchRequest(path, accessToken, options = {}) {
         body: options.body ? JSON.stringify(options.body) : undefined
     });
 
+    if (res.status === 202) {
+        throw new FinchError(202, { message: 'Data is still being synced' });
+    }
+
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new FinchError(res.status, body);
+    }
+
     return res.json();
+}
+
+async function getPayment(accessToken) {
+    return finchRequest('/employer/payment?start_date=2024-01-01&end_date=2024-12-31', accessToken);
+}
+
+async function listBenefits(accessToken) {
+    return finchRequest('/employer/benefits', accessToken);
 }
 
 async function getCompany(accessToken) {
@@ -110,4 +137,6 @@ module.exports = {
     getDirectory,
     getIndividual,
     getEmployment,
+    getPayment,
+    listBenefits,
 };

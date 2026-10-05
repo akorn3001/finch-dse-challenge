@@ -13,6 +13,32 @@ function page(title, body) {
     `;
 }
 
+function errorMessage(error, providerName, product) {
+    switch (error.status) {
+        case 501:
+            return `${providerName} doesn't support ${product} data through Finch.`;
+        case 403:
+            return `This application wasn't granted access to ${product} data.`;
+        case 202:
+            return `${product} data is still syncing from ${providerName}. Check back shortly.`;
+        case 401:
+            return `The connection to ${providerName} needs to be re-authorized.`;
+        case 429:
+            return 'Too many requests. Please wait a moment and try again.';
+        default:
+            return `Something went wrong retrieving ${product} data.`;
+    }
+}
+
+function renderError(product, error, providerName) {
+    return `
+        <div class="error-box">
+            <p>${error.status} error: ${escapeHtml(errorMessage(error, providerName, product))}</p>
+            <p class="error-detail">${escapeHtml(error.message)}</p>
+        </div>
+        `;
+}
+
 function managerName(individual, nameByIdMap) {
     const id = individual.manager?.id;
     if (!id) return null; //genuinely no manager
@@ -96,17 +122,14 @@ function renderCompany(company) {
         <h2>Company</h2>
         <p><span class="bold-label">Legal Name: </span>${display(company.legal_name)}</p>
         <p><span class="bold-label">Entity Type: </span>${display(company.entity?.type)}</p>
-        <p><span class="bold-label">Entity Sub-Type: </span>${display(company.entity?.subtype)}</p>
+        <p><span class="bold-label">Entity Subtype: </span>${display(company.entity?.subtype)}</p>
         <p><span class="bold-label">EIN: </span>${display(company.ein)}</p>
         <p><span class="bold-label">Primary Email: </span>${display(company.primary_email)}</p>
         <p><span class="bold-label">Primary Phone Number: </span>${display(company.primary_phone_number)}</p>
-        <br>
         <h3>Departments</h3>
         ${renderTable(['Name', 'Parent'], departmentRows)}
-        <br>
         <h3>Locations</h3>
         ${renderTable(['Line 1', 'Line 2', 'City', 'State', 'Postal Code', 'Country'], locationRows)}
-        <br>
         <h3>Accounts</h3>
         ${renderTable(['Routing Number', 'Account Name', 'Institution Name', 'Account Type', 'Account Number'], accountRows)}
     `;
@@ -125,7 +148,7 @@ function renderDirectory(directory) {
                 <td>${display(managerName(i, nameByIdMap))}</td>
                 <td>${display(i.department?.name)}</td>
                 <td class="is-active-parent"><span class="${i.is_active ? 'is-active' : 'not-active'}">${display(yesNo(i.is_active))}</span></td>
-                <td><a href="/employee/${i.id}" aria-label="View details for ${display(i.first_name)} ${display(i.last_name)}">View</a></td>
+                <td><a href="/individual/${i.id}" aria-label="View details for ${escapeHtml(i.first_name || '')} ${escapeHtml(i.last_name || '')}">View</a></td>
             </tr>
         `);
 
@@ -189,7 +212,7 @@ function renderEmployment(employment) {
             <td>${display(h.effective_date)}</td>
         </tr>
         `);
-    
+
     const customFieldRows = (employment.custom_fields || []).map(c => `
             <tr>
                 <td>${display(c.name)}</td>
@@ -241,4 +264,12 @@ function renderEmployment(employment) {
     `;
 }
 
-module.exports = { page, display, renderCompany, renderDirectory, renderIndividual, renderEmployment };
+function renderPayment(payment) {
+    return `<h2>Payment</h2><br><pre>${JSON.stringify(payment, null, 2)}</pre>`;
+}
+
+function renderBenefits(benefits) {
+    return `<h2>Benefits</h2><br><pre>${JSON.stringify(benefits, null, 2)}</pre>`;
+}
+
+module.exports = { page, display, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits };
