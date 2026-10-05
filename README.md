@@ -28,28 +28,28 @@ All packages used are open-source and MIT
 
 ## Design Decisions
 ### Raw fetch over the SDK
-- I decided to use raw fetches over the finch SDK so that error handling and auth are explicit.
+I decided to use raw fetches over the finch SDK so that error handling and auth are explicit.
 ### Token Storage
-- Because Finch requires backend-only storage, this application uses a server-side Map with an `httpOnly` cookie, so the token never reaches the browser. `{ secure: true }` was omitted because localhost is HTTP. In production the token would be encrypted at rest in a database.
+Because Finch requires backend-only storage, this application uses a server-side Map with an `httpOnly` cookie, so the token never reaches the browser. `{ secure: true }` was omitted because localhost is HTTP. In production the token would be encrypted at rest in a database.
 ### Scope Restriction
-- Scope restriction is enforced at session creation, not in code. This ensures that the token can't reach the `/payment` or `/pay-statement` endpoints. Because Finch scopes per product, excluding **payment** also excludes `/pay-groups` and `/pay-statement-item`.
+Scope restriction is enforced at session creation, not in code. This ensures that the token can't reach the `/payment` or `/pay-statement` endpoints. Because Finch scopes per product, excluding **payment** also excludes `/pay-groups` and `/pay-statement-item`.
 ### Hardcoded providers list
-- At the time of testing, calling the `/providers` endpoint returns 291 providers, many of which error out at the time of log-in. I decided it would be more manageable to show several providers instead of the full list.
+At the time of testing, calling the `/providers` endpoint returns 291 providers, many of which error out at the time of log-in. I decided it would be more manageable to show several providers instead of the full list.
 ### Why is 'benefits' in the products array?
-- I made the decision to add **benefits** to the products array for the purposes of demonstrating 501 error handling by testing providers who haven't implemented this endpoint.
+I made the decision to add **benefits** to the products array for the purposes of demonstrating 501 error handling by testing providers who haven't implemented this endpoint.
 ### Null Handling
-- A null value means the API didn't return that field, not that something failed - so the field is displayed with *Not Provided* rather than hidden, which tells the user the field exists but wasn't populated. Empty arrays are a third case, shown as *None listed*, since the provider **did** return the field and it's genuinely empty. `/providers` publishes `supported_fields` per provider, which is where most of these gaps actually come from.
+A null value means the API didn't return that field, not that something failed - so the field is displayed with *Not Provided* rather than hidden, which tells the user the field exists but wasn't populated. Empty arrays are a third case, shown as *None listed*, since the provider **did** return the field and it's genuinely empty. `/providers` publishes `supported_fields` per provider, which is where most of these gaps actually come from.
 ### Error Handling
-- I created a `FinchError` class which extends `Error`. This shows status-based messages. On pages that call multiple endpoints (the dashboard calls `/company` and `/directory`, the individual page calls `/individual` and `/employment`) I use `Promise.allSettled` so each section fails independently (e.g. a 501 on one section still lets the other render).
-- `/test/payment` and `/test/benefits` exist to demonstrate error handling, not to display data. I didn't choose to display any fields for these endpoints since they're primarily used for error handling, not field display.
+I created a `FinchError` class which extends `Error`. This shows status-based messages. On pages that call multiple endpoints (the dashboard calls `/company` and `/directory`, the individual page calls `/individual` and `/employment`) I use `Promise.allSettled` so each section fails independently (e.g. a 501 on one section still lets the other render).
+`/test/payment` and `/test/benefits` exist to demonstrate error handling, not to display data. I didn't choose to display any fields for these endpoints since they're primarily used for error handling, not field display.
 ### Account Masking
-- For certain sensitive fields like `account_number` and `routing_number` I created the function `maskSensitive(value)` which only shows the last few numbers of a value, and the rest of the digits show ••••.
+For certain sensitive fields like `account_number` and `routing_number` I created the function `maskSensitive(value)` which only shows the last few numbers of a value, and the rest of the digits show ••••.
 ### Income Data Handling
-- I use a `formatIncome(income)` function to properly format income amounts (e.g. 1234567 becomes $12,345.67)
+I use a `formatIncome(income)` function to properly format income amounts (e.g. 1234567 becomes $12,345.67)
 ### Manager Handling
-- Because the directory returns individuals with manager ids, I resolved these ids against the directory to show manager name instead to be more human-readable in the table. Falls back to the ID when the manager is outside the directory response. 
+Because the directory returns individuals with manager ids, I resolved these ids against the directory to show manager name instead to be more human-readable in the table. Falls back to the ID when the manager is outside the directory response. 
 ### Overlapping fields
-- Because **Individual** and **Employment** have some overlapping fields, I decided to only show the same fields once on the `/individual/:id` page so as not to be redundant.
+Because **Individual** and **Employment** have some overlapping fields, I decided to only show the same fields once on the `/individual/:id` page so as not to be redundant.
 
 ## What I would do with more time
 - Resolve manager names on the `/individual/:id` page by caching the directory in the session.
