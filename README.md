@@ -13,9 +13,9 @@ Small express app built to satisfy the requirements of the Finch take-home assig
 All packages used are open-source and MIT
 
 ## Setup
-- Clone this repository
+- Clone this repository (steps for how to clone a repo [here](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository))
 - In your terminal, navigate to the project folder and run `npm install`
-- Copy the `.env.example` file to a `.env` file. Fill in the *FINCH_CLIENT_ID* and *FINCH_CLIENT_SECRET* values with your actual credentials from your Finch developer account
+- Open up the project in your text editor of choice, then copy the `.env.example` file to a `.env` file. Fill in the *FINCH_CLIENT_ID* and *FINCH_CLIENT_SECRET* values with your actual credentials from your Finch developer account
 - In your Finch developer account, under the Credentials tab, add the redirect URI: http://localhost:3000/callback.
 - In the terminal, run the command `npm start` to start the local server.
 - In your web browser navigate to http://localhost:3000.
