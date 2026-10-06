@@ -1,14 +1,14 @@
 const crypto = require('crypto');
-const sessions = new Map();
+const userSessions = new Map();
 
-function createSession(data) {
-    const sessionId = crypto.randomUUID();
-    sessions.set(sessionId, data);
-    return sessionId;
+function createUserSession(data) {
+    const userSessionId = crypto.randomUUID();
+    userSessions.set(userSessionId, data);
+    return userSessionId;
 }
 
-function getSession(sessionId) {
-    return sessions.get(sessionId);
+function getUserSession(userSessionId) {
+    return userSessions.get(userSessionId);
 }
 
-module.exports = { createSession, getSession };
+module.exports = { createUserSession, getUserSession };

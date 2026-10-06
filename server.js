@@ -3,7 +3,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 
 const { PROVIDERS, providerDisplayName } = require('./providers');
-const { createSession, getSession } = require('./sessions');
+const { createUserSession, getUserSession } = require('./sessions');
 const { createConnectSession, createAccessToken, getCompany, getDirectory, getIndividual, getEmployment, getPayment, listBenefits } = require('./finch');
 const { page, escapeHtml, renderError, renderCompany, renderDirectory, renderIndividual, renderEmployment, renderPayment, renderBenefits } = require('./render');
 
@@ -39,8 +39,8 @@ app.post('/connect', async (req, res) => {
     const providerId = req.body.provider_id;
 
     try {
-        const session = await createConnectSession(providerId);
-        res.redirect(session.connect_url);
+        const connectSession = await createConnectSession(providerId);
+        res.redirect(connectSession.connect_url);
     } catch (error) {
         const detail = error.finchCode === 'unsupported_scopes_for_provider' ? `${providerDisplayName(providerId)} doesn't support all the data types this app requests.` : `Couldn't start a connection with ${providerDisplayName(providerId)}.`;
 
@@ -56,7 +56,7 @@ app.post('/connect', async (req, res) => {
 
 });
 
-// Swaps code for access token to create session
+// Swaps code for access token to create user session
 app.get('/callback', async (req, res) => {
     const code = req.query.code;
 
@@ -74,14 +74,14 @@ app.get('/callback', async (req, res) => {
 
     try {
         const tokenData = await createAccessToken(code);
-        const sessionId = createSession({
+        const userSessionId = createUserSession({
             accessToken: tokenData.access_token,
             providerId: tokenData.provider_id,
             products: tokenData.products,
         });
         // { secure: true } deliberately omitted as it would require HTTPS, which localhost doesn't use
         // would use in production
-        res.cookie('sid', sessionId, { httpOnly: true, sameSite: 'lax' });
+        res.cookie('sid', userSessionId, { httpOnly: true, sameSite: 'lax' });
         res.redirect('/dashboard');
     } catch (error) {
         const detail = error.status === 400 ? 'The authorization code was invalid or has already been used. Each code can only be exchanged once.' : error.status === 401 ? 'The client credentials in your .env file were rejected.' : 'Finch could not be reached to complete the connection.';
@@ -99,19 +99,19 @@ app.get('/callback', async (req, res) => {
 
 // Main page which shows company and directory data
 app.get('/dashboard', async (req, res) => {
-    const session = getSession(req.cookies.sid);
+    const userSession = getUserSession(req.cookies.sid);
 
-    if (!session) {
+    if (!userSession) {
         return res.redirect('/');
     }
 
     const [companyResult, directoryResult] = await Promise.allSettled([
-        getCompany(session.accessToken),
-        getDirectory(session.accessToken),
+        getCompany(userSession.accessToken),
+        getDirectory(userSession.accessToken),
     ]);
 
-    const companyBody = companyResult.status === 'fulfilled' ? renderCompany(companyResult.value) : renderError('Company', companyResult.reason, providerDisplayName(session.providerId));
-    const directoryBody = directoryResult.status === 'fulfilled' ? renderDirectory(directoryResult.value) : renderError('Directory', directoryResult.reason, providerDisplayName(session.providerId));
+    const companyBody = companyResult.status === 'fulfilled' ? renderCompany(companyResult.value) : renderError('Company', companyResult.reason, providerDisplayName(userSession.providerId));
+    const directoryBody = directoryResult.status === 'fulfilled' ? renderDirectory(directoryResult.value) : renderError('Directory', directoryResult.reason, providerDisplayName(userSession.providerId));
 
     const body = `
     <h2>Error-handling Demos</h2>
@@ -127,20 +127,20 @@ app.get('/dashboard', async (req, res) => {
 
 // Page that shows individual and employment data for single individual
 app.get('/individual/:id', async (req, res) => {
-    const session = getSession(req.cookies.sid);
+    const userSession = getUserSession(req.cookies.sid);
 
-    if (!session) {
+    if (!userSession) {
         return res.redirect('/');
     }
     const individualId = req.params.id;
 
     const [individualResult, employmentResult] = await Promise.allSettled([
-        getIndividual(session.accessToken, individualId),
-        getEmployment(session.accessToken, individualId),
+        getIndividual(userSession.accessToken, individualId),
+        getEmployment(userSession.accessToken, individualId),
     ]);
 
-    const individualBody = individualResult.status === 'fulfilled' ? renderIndividual(individualResult.value.responses[0].body) : renderError('Individual', individualResult.reason, providerDisplayName(session.providerId));
-    const employmentBody = employmentResult.status === 'fulfilled' ? renderEmployment(employmentResult.value.responses[0].body) : renderError('Employment', employmentResult.reason, providerDisplayName(session.providerId));
+    const individualBody = individualResult.status === 'fulfilled' ? renderIndividual(individualResult.value.responses[0].body) : renderError('Individual', individualResult.reason, providerDisplayName(userSession.providerId));
+    const employmentBody = employmentResult.status === 'fulfilled' ? renderEmployment(employmentResult.value.responses[0].body) : renderError('Employment', employmentResult.reason, providerDisplayName(userSession.providerId));
 
     const body = `
     ${individualBody}
@@ -155,19 +155,19 @@ app.get('/individual/:id', async (req, res) => {
 
 // Route for testing /payment call
 app.get('/test/payment', async (req, res) => {
-    const session = getSession(req.cookies.sid);
+    const userSession = getUserSession(req.cookies.sid);
 
-    if (!session) {
+    if (!userSession) {
         return res.redirect('/');
     }
 
     let body;
 
     try {
-        const paymentResult = await getPayment(session.accessToken);
+        const paymentResult = await getPayment(userSession.accessToken);
         body = renderPayment(paymentResult);
     } catch (error) {
-        body = renderError('Payment', error, providerDisplayName(session.providerId));
+        body = renderError('Payment', error, providerDisplayName(userSession.providerId));
     }
 
     res.send(page('Payment', body));
@@ -175,19 +175,19 @@ app.get('/test/payment', async (req, res) => {
 
 // Route for testing /benefits call
 app.get('/test/benefits', async (req, res) => {
-    const session = getSession(req.cookies.sid);
+    const userSession = getUserSession(req.cookies.sid);
 
-    if (!session) {
+    if (!userSession) {
         return res.redirect('/');
     }
 
     let body;
 
     try {
-        const benefitsResult = await listBenefits(session.accessToken);
+        const benefitsResult = await listBenefits(userSession.accessToken);
         body = renderBenefits(benefitsResult);
     } catch (error) {
-        body = renderError('Benefits', error, providerDisplayName(session.providerId));
+        body = renderError('Benefits', error, providerDisplayName(userSession.providerId));
     }
 
     res.send(page('Benefits', body));
